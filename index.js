@@ -17,7 +17,9 @@ mongoose.connect(process.env.DATABASE_URI)
 
 
 const UserRouter = require("./routes/user.routes")
+const ProductRouter = require("./routes/product.routes")
 app.use('/api/v1', UserRouter)
+app.use('/api/v1', ProductRouter)
 
 
 
