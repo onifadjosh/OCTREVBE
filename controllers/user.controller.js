@@ -1,29 +1,55 @@
 const UserModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
+const cloudinary = require("cloudinary").v2;
 
-const signUp = async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
+
+const signUp = async (req, res, next) => {
+  const { firstName, lastName, email, password, profilePicture } = req.body;
   console.log(req.body);
   try {
     let saltRound = 10;
     const salt = await bcrypt.genSalt(saltRound);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    const image = await cloudinary.uploader.upload(
+      profilePicture,
+      { resource_type: "image" },
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          next();
+        } else {
+          // console.log(result)
+          return result;
+        }
+      }
+    );
     const user = await UserModel.create({
       firstName,
       lastName,
       email,
       password: hashedPassword,
+      profilePicture: image.secure_url,
     });
 
     console.log(user);
-    const token = jwt.sign({id:user._id}, process.env.JWT_SECRET, {expiresIn:"1h"})
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     res.status(201).json({
       status: true,
       message: "user created successfully",
       user,
-      token
+      token,
     });
   } catch (error) {
     console.log(error);
@@ -68,7 +94,7 @@ const login = async (req, res) => {
           status: true,
           message: "user can login",
           user: {
-            id:user._id, 
+            id: user._id,
             email: user.email,
             fullname: user.firstName + " " + user.lastName,
           },
@@ -92,7 +118,7 @@ const verify = async (req, res, next) => {
       ? req.headers["authorization"].split(" ")[1]
       : req.headers["authorization"].split(" ")[0];
 
-      console.log(token)
+    console.log(token);
 
     const user = jwt.verify(
       token,
@@ -105,13 +131,13 @@ const verify = async (req, res, next) => {
           });
         } else {
           console.log(decoded.id);
-          req.userId = decoded.id
+          req.userId = decoded.id;
           next();
         }
       }
     );
 
-    console.log(user, 'this is user')
+    console.log(user, "this is user");
   } catch (error) {
     console.log(error);
     res.send({
@@ -122,30 +148,29 @@ const verify = async (req, res, next) => {
 };
 
 const getUser = async (req, res) => {
-  const{id}= req.params
-  console.log('from the verify', req.userId)
+  const { id } = req.params;
+  console.log("from the verify", req.userId);
 
   try {
-    let user = await UserModel.findById({_id:id})
-    if(user){
+    let user = await UserModel.findById({ _id: id });
+    if (user) {
       res.send({
-        status:true,
-        user
-      })
+        status: true,
+        user,
+      });
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.send({
-      status:false,
-      message:"user fetch failed"
-    })
+      status: false,
+      message: "user fetch failed",
+    });
   }
-
 };
 
 module.exports = {
   signUp,
   login,
   verify,
-  getUser
+  getUser,
 };
