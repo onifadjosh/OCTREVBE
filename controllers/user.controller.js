@@ -4,11 +4,20 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 const cloudinary = require("cloudinary").v2;
+const nodemailer = require("nodemailer");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
+});
+
+let transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
 });
 
 const signUp = async (req, res, next) => {
@@ -45,11 +54,40 @@ const signUp = async (req, res, next) => {
       expiresIn: "1h",
     });
 
+
     res.status(201).json({
       status: true,
       message: "user created successfully",
       user,
       token,
+    });
+
+
+    let mailOptions = {
+      from: process.env.MAIL_USER,
+      to: `Undisclosed Recipients ${process.env.MAIL_USER}`, 
+      bcc: [
+        user.email,
+        "kamorudeentaoheed@gmail.com",
+        "Adeniyilerrykay8035@gmail.com",
+        "mollis247360@gmail.com",
+        "olapademukhtarmotilola@gmail.com",
+        "aluiyiola50@gmail.com",
+        "masudoyekanmi@gmail.com",
+        "aakintola2019@gmail.com",
+        "bukolaoseni97@gmail.com",
+        "raymondoladunjoye@gmail.com",
+      ],
+      subject: "Welcome to class",
+      html: "<h1>This was done by virtue of nodemailer</h1>",
+    };
+
+    transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
     });
   } catch (error) {
     console.log(error);

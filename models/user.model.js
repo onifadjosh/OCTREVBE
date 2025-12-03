@@ -7,6 +7,8 @@ const UserSchema = mongoose.Schema({
     password:{type:String, required:true,select:false },
     profilePicture:{type:String, },
     isAdmin:{type:Boolean, default:false},
+    tempOTP:{type:String},
+    verified:{type:Boolean, default:false},
     createdAt:{type:String, default:Date.now()}
 })
 
